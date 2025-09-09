@@ -194,12 +194,11 @@ docker login -u username -p password registry.example.com
 2. **Run the bundle creation script:**
 ```bash
 #!/bin/bash
-set -e
 
 # Configuration
 BUNDLE_FILE="bundle.tar.gz"
 ENCRYPTED_BUNDLE_FILE="bundle.tar.gz.enc"
-ENCRYPTION_TOKEN=$(cat /etc/update.d/iot_token.txt)
+ENCRYPTION_TOKEN=$(cat /etc/device.d/iot_token.txt)
 IMAGE_DIR="./images"
 BUNDLE_DIR="./bundle"
 
@@ -207,16 +206,19 @@ BUNDLE_DIR="./bundle"
 mkdir -p "$IMAGE_DIR" "$BUNDLE_DIR"
 
 # Extract and save Docker images
+i=1
 echo "🔄 Processing Docker images..."
 images=$(grep 'image:' docker-compose.yml | awk '{print $2}' | sort -u)
 
 for image in $images; do
-  filename=$(echo "$image" | sed 's/[\/:]/_/g').tar.gz
+  filename="${i}.tar.gz"
   image_path="$IMAGE_DIR/$filename"
   
-  echo "📦 Saving image: $image"
+  echo "📦 Saving image $i: $image"
   docker pull "$image"
   docker save "$image" | gzip > "$image_path"
+  
+  i=$((i+1))
 done
 
 # Copy project files
