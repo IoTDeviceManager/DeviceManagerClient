@@ -1,6 +1,6 @@
 # IoT Device Manager
 
-A comprehensive web-based interface for managing IoT devices, Docker containers, and system configurations through a secure, user-friendly dashboard.
+A comprehensive web-based interface for managing IoT devices, Docker containers, and system configurations through a secure, user-friendly dashboard. For more details see [our website](https://iotmanager.dev)
 
 ## Table of Contents
 
