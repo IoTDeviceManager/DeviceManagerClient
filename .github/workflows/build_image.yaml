@@ -5,17 +5,6 @@ on:
     inputs:
       tag:
         description: Version Tag
-      platform:
-        description: Target platform
-        required: true
-        type: choice
-        options:
-          - linux/amd64
-          - linux/arm64
-          - linux/arm/v7
-          - linux/arm/v6
-          - linux/i386
-        default: linux/amd64
 
 jobs:
   push-image-to-docker-hub:
@@ -38,7 +27,6 @@ jobs:
           if [ -n "${{ github.event.inputs.tag }}" ]; then
             echo "version_tag=${{ github.event.inputs.tag }}" >> "$GITHUB_ENV"
           fi
-          echo "build_platform=${{ github.event.inputs.platform }}" >> "$GITHUB_ENV"
 
       - name: Docker Login
         uses: docker/login-action@v2
@@ -51,7 +39,7 @@ jobs:
         with:
           context: ./
           file: ./Dockerfile
-          platforms: ${{ env.build_platform }}
+          platforms: linux/amd64,linux/arm64,linux/arm/v7,linux/arm/v6,linux/i386
           push: true
           tags: collabro/iotdevicemanager:${{ env.version_tag }}
           
