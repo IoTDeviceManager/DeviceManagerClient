@@ -5,7 +5,6 @@ import distro
 import platform
 import asyncio
 import psutil
-from pydantic import root_model
 from datetime import datetime, timedelta
 from fastapi import APIRouter, Form, HTTPException, WebSocket, WebSocketDisconnect, Depends
 from fastapi.responses import StreamingResponse
