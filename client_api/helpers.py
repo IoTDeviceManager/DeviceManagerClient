@@ -87,7 +87,7 @@ class SSHClient:
         """
         self.hostname = "localhost"
         self.username = "root"
-        self.port = 22
+        self.port = 2225
         self.timeout = 10
         self.client = None
         self.channel = None  # for interactive shell
