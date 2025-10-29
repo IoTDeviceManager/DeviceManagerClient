@@ -8,7 +8,7 @@ from pathlib import Path
 
 ADMIN_ROLE = "admin"
 USER_ROLE = "common"
-KEY = paramiko.RSAKey.from_private_key_file("/root/.ssh/id_rsa")
+KEY = paramiko.Ed25519Key.from_private_key_file("/root/.ssh/id_rsa")
 ANSI_ESCAPE = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
 DEVICE_DIR = Path("/etc/device.d")
 DEVICE_TOKEN_FILE = Path(f"{DEVICE_DIR}/iot_token.txt")
