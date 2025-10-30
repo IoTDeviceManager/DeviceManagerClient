@@ -377,7 +377,7 @@ def set_date(date: str = Form(..., example="2025-08-02 18:30:00")):
     base_os = get_base_os()
     cmd = f'date --set="{date}" && hwclock --systohc'
 
-    if base_os == "mac"
+    if base_os == "mac":
         cmd = ""
     elif base_os == "windows":
         cmd = ""
@@ -418,7 +418,7 @@ def restart_services():
 
                 if get_base_os() == "windows":
                     script = ""
-                    
+
                 channel.exec_command(script)
 
                 while True:
