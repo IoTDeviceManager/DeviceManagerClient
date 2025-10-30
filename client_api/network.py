@@ -2,7 +2,7 @@
 from pathlib import Path
 from enum import Enum
 from fastapi import APIRouter, Form, HTTPException, Body, Depends
-from helpers import USER_ROLE, SSHClient
+from helpers import USER_ROLE, SSHClient, get_base_os
 from users import get_current_user
 
 def netmask_to_cidr(netmask: str) -> int:
@@ -11,20 +11,26 @@ def netmask_to_cidr(netmask: str) -> int:
 
 def get_sysfs_interfaces():
     with SSHClient() as sshContext:
-        stdout, _, _ = sshContext.run_command(
-            r"""for iface in /sys/class/net/*; do
-    name=$(basename "$iface")
-    if [ -d "$iface/device" ]; then
-        if [ -d "$iface/wireless" ]; then
-            echo "$name:wifi"
-        else
-            echo "$name:ethernet"
-        fi
-    else
-        echo "$name:virtual"
-    fi
-done"""
-        )
+        base_os = get_base_os()
+        cmd = r"""
+        for iface in /sys/class/net/*; do
+            name=$(basename "$iface")
+            if [ -d "$iface/device" ]; then
+                if [ -d "$iface/wireless" ]; then
+                    echo "$name:wifi"
+                else
+                    echo "$name:ethernet"
+                fi
+            else
+                echo "$name:virtual"
+            fi
+        done
+        """
+        if base_os == "mac":
+            cmd = ""
+        elif base_os = "windows":
+            cmd = ""
+        stdout, _, _ = sshContext.run_command(cmd)
 
     ethernet = []
     wifi = []

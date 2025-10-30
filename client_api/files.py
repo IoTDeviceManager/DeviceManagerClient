@@ -62,8 +62,8 @@ def delete_path_recursive(sftp, path: str):
 
 @router.get("/list", response_model=List[FileEntry], dependencies=[Depends(get_current_user(ADMIN_ROLE))])
 def list_files(path: str = Query("/", description="Directory to list")):
-    with SSHClient() as ssh:
-        sftp = ssh.open_sftp()
+    with SSHClient() as sshContext:
+        sftp = sshContext.open_sftp()
         try:
             files = sftp.listdir_attr(path)
         except FileNotFoundError:
@@ -167,8 +167,8 @@ def rename_file(
     oldPath: str = Form(...),
     newPath: str = Form(...)
 ):
-    with SSHClient() as ssh:
-        sftp = ssh.open_sftp()
+    with SSHClient() as sshContext:
+        sftp = sshContext.open_sftp()
         try:
             sftp.rename(oldPath, newPath)
             return {"detail": f"Renamed to: {newPath}"}
@@ -179,8 +179,8 @@ def rename_file(
 def new_folder(
     newPath: str = Form(...)
 ):
-    with SSHClient() as ssh:
-        sftp = ssh.open_sftp()
+    with SSHClient() as sshContext:
+        sftp = sshContext.open_sftp()
         try:
             sftp.mkdir(newPath)
             return {"detail": f"New folder: {newPath}"}
@@ -191,8 +191,8 @@ def new_folder(
 def new_file(
     newPath: str = Form(...)
 ):
-    with SSHClient() as ssh:
-        sftp = ssh.open_sftp()
+    with SSHClient() as sshContext:
+        sftp = sshContext.open_sftp()
         try:
             with sftp.file(newPath, mode='w') as f:
                 f.write("")  # Create empty file
@@ -221,9 +221,9 @@ def upload_file(
             upload_progress[upload_id] = int((bytes_written / total_size) * 100)
 
     # Move file into final host location using SSH context
-    with SSHClient() as ssh:
+    with SSHClient() as sshContext:
         cmd = f"mv '{temp_path}' '{path.rstrip('/')}/{upload.filename}'"
-        _, stderr, code = ssh.run_command(cmd)
+        _, stderr, code = sshContext.run_command(cmd)
         if code != 0:
             raise HTTPException(
                 status_code=500,
@@ -242,8 +242,8 @@ def get_upload_progress(upload_id: str):
 def delete_file(
     path: str = Query(..., description="Remote file or folder to delete")
 ):
-    with SSHClient() as ssh:
-        sftp = ssh.open_sftp()
+    with SSHClient() as sshContext:
+        sftp = sshContext.open_sftp()
         try:
             delete_path_recursive(sftp, path)
             return {"detail": f"Deleted: {path}"}

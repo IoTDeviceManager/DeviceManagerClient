@@ -4,7 +4,7 @@ from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, Form, B
 from helpers import (
     CURRENT_DIR, STAGE_DIR, CURRENT_OVERRIDE_SCRIPT_PATH, get_version,
     SSHClient, clear_stage_dir, clear_current_dir, get_device_token,
-    get_stage_version, clean_ansi_and_whitespace, USER_ROLE
+    get_stage_version, clean_ansi_and_whitespace, USER_ROLE, get_base_os
 )
 from users import get_current_user
 
@@ -63,10 +63,13 @@ def upload(
     DECRYPT_START_TIME[file.filename] = time.time()
 
     with SSHClient() as sshContext:
-        stdout, stderr, code = sshContext.run_command(
-            f'openssl enc -aes-256-cbc -d -salt -pbkdf2 -in "{target_path}" '
+        cmd = (
+            f'/usr/local/bin/openssl enc -aes-256-cbc -d -salt -pbkdf2 -in "{target_path}" '
             f'-out "{decrypt_path}" -pass pass:"{get_device_token()}"'
         )
+        if get_base_os() == "windows":
+            cmd = ""
+        stdout, stderr, code = sshContext.run_command(cmd)
     if code != 0:
         raise HTTPException(status_code=500, detail=f"File decryption failed: {stderr.strip()}")
     os.remove(target_path)
@@ -206,15 +209,18 @@ def update():
     })
 
     script = f"""
-    docker ps -a --format '{{{{.ID}}}} {{{{.Names}}}}' \
+    /usr/local/bin/docker ps -a --format '{{{{.ID}}}} {{{{.Names}}}}' \
         | grep -v -w 'device_manager' \
         | awk '{{print $1}}' \
         | xargs -r docker rm -f && \
     cd {CURRENT_DIR} && \
-    for img in images/*.tar.gz; do docker load -i "$img"; done && \
-    docker-compose up -d && \
-    docker system prune -af
+    for img in images/*.tar.gz; do /usr/local/bin/docker load -i "$img"; done && \
+    /usr/local/bin/docker-compose up -d && \
+    /usr/local/bin/docker system prune -af
     """
+
+    if get_base_os() == "windows":
+        script = ""
 
     if CURRENT_OVERRIDE_SCRIPT_PATH.exists():
         os.chmod(CURRENT_OVERRIDE_SCRIPT_PATH, 0o777)
@@ -227,6 +233,9 @@ def update():
         ./override.sh
         """
 
+        if get_base_os() == "windows":
+            script = ""
+
         UPDATE_PROGRESS.update({
             "log": "Update running in override mode.",
         })
@@ -234,11 +243,10 @@ def update():
 
     data = b""
     try:
-        with SSHClient() as ssh:
-            transport = ssh.client.get_transport()
+        with SSHClient() as sshContext:
+            transport = sshContext.client.get_transport()
             channel = transport.open_session()
             channel.set_combine_stderr(True)
-            script = ssh._wrap_command(script)
             channel.exec_command(script)
 
             while True:

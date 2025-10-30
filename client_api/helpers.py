@@ -107,15 +107,6 @@ class SSHClient:
             timeout=self.timeout,
         )
 
-    def _wrap_command(self, command: str) -> str:
-        """
-        Prepend the default PATH to any command.
-        """
-        if get_base_os() in ["linux", "mac"]:
-            # Prepend PATH
-            command = f"PATH='/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH' {command}"
-        return command
-
     def open_sftp(self):
         if not self.client:
             raise RuntimeError("SSH client not connected. Call connect() first.")
@@ -128,7 +119,6 @@ class SSHClient:
         if not self.client:
             raise RuntimeError("SSH client not connected. Call connect() first.")
 
-        command = self._wrap_command(command)
         stdin, stdout, stderr = self.client.exec_command(command)
         exit_status = stdout.channel.recv_exit_status()
         return stdout.read().decode(), stderr.read().decode(), exit_status

@@ -8,7 +8,7 @@ import psutil
 from datetime import datetime, timedelta
 from fastapi import APIRouter, Form, HTTPException, WebSocket, WebSocketDisconnect, Depends
 from fastapi.responses import StreamingResponse
-from helpers import CURRENT_DIR, USER_ROLE, CURRENT_STATE_FILE, SSHClient, get_version, clean_ansi_and_whitespace, logger
+from helpers import CURRENT_DIR, USER_ROLE, CURRENT_STATE_FILE, SSHClient, get_version, clean_ansi_and_whitespace, logger, get_base_os
 from users import get_current_user, get_current_user_manual
 
 router = APIRouter(tags=["Base"])
@@ -70,7 +70,10 @@ def get_system_health():
         try:
             with SSHClient() as sshContext:
                 # Check if Docker is available and get container info
-                stdout, stderr, code = sshContext.run_command("docker ps --format json")
+                command = "/usr/local/bin/docker ps --format json"
+                if get_base_os() == "windows":
+                    command = "docker ps --format json"
+                stdout, stderr, code = sshContext.run_command(command)
                 
                 if code != 0:
                     # Handle specific Docker error cases
@@ -285,16 +288,20 @@ def get_logs():
 
     def stream():
         try:
-            with SSHClient() as ssh:
-                transport = ssh.client.get_transport()
+            with SSHClient() as sshContext:
+                transport = sshContext.client.get_transport()
                 channel = transport.open_session()
                 channel.set_combine_stderr(True)
+
                 script = """
-                docker ps --format '{{.Names}}' | grep -v '^device_manager$' | 
-                xargs -I{} sh -c 'echo "=== Logs for container: {} ==="; docker 
+                /usr/local/bin/docker ps --format '{{.Names}}' | grep -v '^device_manager$' | 
+                xargs -I{} sh -c 'echo "=== Logs for container: {} ==="; /usr/local/bin/docker 
                 logs --tail 100 {}; echo'
                 """
-                script = ssh._wrap_command(script)
+
+                if get_base_os() == "windows":
+                    script = ""
+
                 channel.exec_command(script)
 
                 while True:
@@ -367,7 +374,13 @@ def set_date(date: str = Form(..., example="2025-08-02 18:30:00")):
     if not re.match(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$", date):
         raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-mm-dd HH:MM:SS")
 
+    base_os = get_base_os()
     cmd = f'date --set="{date}" && hwclock --systohc'
+
+    if base_os == "mac"
+        cmd = ""
+    elif base_os == "windows":
+        cmd = ""
 
     with SSHClient() as sshContext:
         stdout, stderr, code = sshContext.run_command(cmd)
@@ -383,7 +396,10 @@ def reboot():
     """
     with SSHClient() as sshContext:
         # Run reboot in background so SSH can exit cleanly
-        sshContext.run_command("nohup reboot >/dev/null 2>&1 &")
+        cmd = "nohup reboot >/dev/null 2>&1 &"
+        if get_base_os() == "windows":
+            cmd = ""
+        sshContext.run_command(cmd)
     return {"message": "rebooting in progress"}
 
 @router.post("/restart_services", dependencies=[Depends(get_current_user(USER_ROLE))])
@@ -394,14 +410,15 @@ def restart_services():
 
     def stream():
         try:
-            with SSHClient() as ssh:
-                transport = ssh.client.get_transport()
+            with SSHClient() as sshContext:
+                transport = sshContext.client.get_transport()
                 channel = transport.open_session()
                 channel.set_combine_stderr(True)
-                script = f"cd {CURRENT_DIR} && docker-compose down && docker-compose up -d"
-                print(f"Before: {script}")
-                script = ssh._wrap_command(script)
-                print(f"After: {script}")
+                script = "cd {CURRENT_DIR} && /usr/local/bin/docker-compose down && /usr/local/bin/docker-compose up -d"
+
+                if get_base_os() == "windows":
+                    script = ""
+                    
                 channel.exec_command(script)
 
                 while True:
