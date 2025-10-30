@@ -122,7 +122,7 @@ class SSHClient:
         if get_base_os() in ["linux", "mac"]:
             command = f"PATH='/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH' {command}"
 
-        stdin, stdout, stderr = self.client.exec_command()
+        stdin, stdout, stderr = self.client.exec_command(command)
         exit_status = stdout.channel.recv_exit_status()
         return stdout.read().decode(), stderr.read().decode(), exit_status
 
