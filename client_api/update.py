@@ -238,6 +238,7 @@ def update():
             transport = ssh.client.get_transport()
             channel = transport.open_session()
             channel.set_combine_stderr(True)
+            script = ssh._wrap_command(script)
             channel.exec_command(script)
 
             while True:

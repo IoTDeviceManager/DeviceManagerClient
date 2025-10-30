@@ -292,6 +292,7 @@ def get_logs():
                 transport = ssh.client.get_transport()
                 channel = transport.open_session()
                 channel.set_combine_stderr(True)
+                script = ssh._wrap_command(script)
                 channel.exec_command(script)
 
                 while True:
@@ -395,7 +396,8 @@ def restart_services():
                 transport = ssh.client.get_transport()
                 channel = transport.open_session()
                 channel.set_combine_stderr(True)
-                script = f"echo \"Remote PATH: $PATH\" cd {CURRENT_DIR} && docker-compose down && docker-compose up -d"
+                script = f"cd {CURRENT_DIR} && docker-compose down && docker-compose up -d"
+                script = ssh._wrap_command(script)
                 channel.exec_command(script)
 
                 while True:
