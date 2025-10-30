@@ -36,6 +36,9 @@ logging.basicConfig(
 
 logger = logging.getLogger(__name__)
 
+def get_base_os():
+    return os.environ.get("BASE_OS")
+
 def clean_ansi_and_whitespace(s: str) -> str:
     clean_str = ANSI_ESCAPE.sub("", s)
     return "\n".join(line.rstrip() for line in clean_str.splitlines())
@@ -115,8 +118,11 @@ class SSHClient:
         """
         if not self.client:
             raise RuntimeError("SSH client not connected. Call connect() first.")
+        
+        if get_base_os() in ["linux", "mac"]:
+            command = f"PATH='/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH' {command}"
 
-        stdin, stdout, stderr = self.client.exec_command(command)
+        stdin, stdout, stderr = self.client.exec_command()
         exit_status = stdout.channel.recv_exit_status()
         return stdout.read().decode(), stderr.read().decode(), exit_status
 
