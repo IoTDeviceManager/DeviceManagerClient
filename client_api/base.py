@@ -414,7 +414,7 @@ def restart_services():
                 transport = sshContext.client.get_transport()
                 channel = transport.open_session()
                 channel.set_combine_stderr(True)
-                script = "cd {CURRENT_DIR} && /usr/local/bin/docker-compose down && /usr/local/bin/docker-compose up -d"
+                script = f"cd {CURRENT_DIR} && /usr/local/bin/docker-compose down && /usr/local/bin/docker-compose up -d"
 
                 if get_base_os() == "windows":
                     script = ""
