@@ -28,7 +28,7 @@ def get_sysfs_interfaces():
         """
         if base_os == "mac":
             cmd = ""
-        elif base_os = "windows":
+        elif base_os == "windows":
             cmd = ""
         stdout, _, _ = sshContext.run_command(cmd)
 
