@@ -113,7 +113,7 @@ class SSHClient:
         """
         if get_base_os() in ["linux", "mac"]:
             # Prepend PATH
-            command = f"PATH='/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH' {command}"
+            command = f"export PATH='/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:$PATH' {command}"
         return command
 
     def open_sftp(self):
