@@ -282,9 +282,6 @@ def health_check():
 @router.get("/logs", dependencies=[Depends(get_current_user(USER_ROLE))])
 def get_logs():
     # Bash command: list containers, exclude device_manager, show last 100 lines each
-    script = """
-    docker ps --format '{{.Names}}' | grep -v '^device_manager$' | xargs -I{} sh -c 'echo "=== Logs for container: {} ==="; docker logs --tail 100 {}; echo'
-    """
 
     def stream():
         try:
@@ -292,6 +289,11 @@ def get_logs():
                 transport = ssh.client.get_transport()
                 channel = transport.open_session()
                 channel.set_combine_stderr(True)
+                script = """
+                docker ps --format '{{.Names}}' | grep -v '^device_manager$' | 
+                xargs -I{} sh -c 'echo "=== Logs for container: {} ==="; docker 
+                logs --tail 100 {}; echo'
+                """
                 script = ssh._wrap_command(script)
                 channel.exec_command(script)
 
