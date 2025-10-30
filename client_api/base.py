@@ -399,7 +399,9 @@ def restart_services():
                 channel = transport.open_session()
                 channel.set_combine_stderr(True)
                 script = f"cd {CURRENT_DIR} && docker-compose down && docker-compose up -d"
+                print(f"Before: {script}")
                 script = ssh._wrap_command(script)
+                print(f"After: {script}")
                 channel.exec_command(script)
 
                 while True:
@@ -418,6 +420,7 @@ def restart_services():
 
                 exit_code = channel.recv_exit_status()
                 if exit_code != 0:
+                    print("Failed spectacularly")
                     yield f"\nProcess exited with code {exit_code}\n"
 
         except Exception as e:
